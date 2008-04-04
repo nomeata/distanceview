@@ -586,6 +586,7 @@ class DistanceView:
                             if self.graph.alone(n):
                                 self.graph.delete_vertex(n)
                                 self.point_selected = None
+                                self.hover_point = None
                         else:
                             self.graph.toggle_edge((self.point_selected, n))
             self.queue_draw()
