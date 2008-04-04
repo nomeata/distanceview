@@ -614,7 +614,8 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                     #d[x,y] = min(map (lambda p1: d[p1] + 5*dist(p,p1), points))
 
                     # Best footpoint:
-                    for (p1,p2) in self.graph.edges:
+                    #for (p1,p2) in self.graph.edges:
+                    for (p1,p2) in self.graph.close_edges(p):
                         f = find_footpoint((p1,p2),p)
                         df = min(d[p1] + dist(p1,f), d[p2] + dist(p2,f))
                         d[p] = min(d[p], df + self.penalty.get_value_as_int() * dist(f,p))
