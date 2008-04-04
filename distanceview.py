@@ -109,12 +109,27 @@ class Graph(object):
 
     def load(self,dump):
         (self.vertices, self.edges, self.start) = dump
+        self.update_edgelists()
 
     def nearest_point(self, p):
         if self.vertices:
             return min(self.vertices, key=lambda v: dist(p,v))
         else:
             return (-100,-100)
+
+    def close_edges(self,p):
+        if not self.in_bbox(p, self.max_bounds):
+            return self.face_to_edges(self.faces[self.outer_face])
+        
+        edges = []
+        for i in range(len(self.faces)):
+            if i != self.outer_face and self.in_bbox(p, self.bounding_boxes[i]):
+                edges.extend(self.face_to_edges(self.faces[i]))
+
+        if not edges: # not contained in anything? probably outer face:
+            return self.face_to_edges(self.faces[self.outer_face])
+
+        return edges
 
     def alone(self,p):
         for (p1,p2) in self.edges:
@@ -126,12 +141,16 @@ class Graph(object):
         assert self.alone(p)
         self.vertices.remove(p)
 
+        self.update_edgelists()
+
     def add_vertex(self, p):
         assert not p in self.vertices
         assert type(p[0]) == int and type(p[1]) == int
         if not self.vertices:
             self.start = p
         self.vertices.append(p)
+
+        self.update_edgelists()
 
     def has_edge(self,(p1,p2)):
         return (p1,p2) in self.edges or (p2,p1) in self.edges
@@ -144,6 +163,61 @@ class Graph(object):
             self.edges.remove((p2,p1))
         else:
             self.edges.append((p1,p2))
+
+        self.update_edgelists()
+
+    def update_edgelists(self):
+        self.edgelist = {}
+        for (p1,p2) in self.edges:
+            self.edgelist.setdefault(p1,[]).append(p2)
+            self.edgelist.setdefault(p2,[]).append(p1)
+        for (x,y),l in self.edgelist.iteritems():
+            # order edges by direction, counterclockwise starting from North
+            l.sort(key = lambda (x2,y2): math.atan2(x2-x,y2-y))
+
+        self.faces = []
+        edges_to_try = self.edges[:]
+        edges_to_try.extend(map(lambda (p1,p2):(p2,p1), self.edges))
+        while edges_to_try:
+            (f,t) = edges_to_try.pop()
+            face = [f]
+            while t != face[0]:
+                face.append(t)
+                incoming_index = self.edgelist[t].index(f)
+                next_index = (incoming_index-1) % len(self.edgelist[t])
+                (f,t) = (t, self.edgelist[t][next_index])
+                edges_to_try.remove((f,t))
+            self.faces.append(face)
+
+        self.max_bounds = self.bbox(self.vertices)
+
+        self.bounding_boxes = map(self.bbox, self.faces)
+
+        self.outer_face = None
+        for i in range(len(self.faces)):
+            # first estimate
+            if self.bounding_boxes[i] == self.max_bounds:
+                face = self.faces[i]
+                north_point_index = min(range(len(face)), key=lambda j:face[j][1])
+                north_point = face[north_point_index]
+                next = face[(north_point_index+1) % len(face) ]
+                prev = face[(north_point_index-1) % len(face) ]
+                if prev[0] < next[0]:
+                    # this seems to be an outer face
+                    self.outer_face = i
+
+    def bbox(self, points):
+        return (min(map(lambda (x,y):x, points)),
+                max(map(lambda (x,y):x, points)),
+                min(map(lambda (x,y):y, points)),
+                max(map(lambda (x,y):y, points)))
+
+    def in_bbox(self,(x,y),(min_x,max_x,min_y,max_y)):
+        return min_x <= x <= max_x and min_y <= y <= max_y
+
+    def face_to_edges(self, face):
+        return zip(face, face[1:] + [face[0]])
+        
         
 class DistanceView:
     def __init__(self):
