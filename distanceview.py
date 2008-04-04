@@ -270,46 +270,6 @@ class Graph(object):
                         i = i+1
                 self.triangulation.append((tuple(points[:3]), facenum))
 
-                #convexes = []
-                #points = face[:]
-                #while len(points)>=3:
-                    #start = points[0]
-                    #if not self.turn_left(start, points[1], points[2]):
-                        ## bad starting point
-                        #points.remove(start)
-                        #points.append(start)
-                    #else:
-                        #points.remove(start)
-                        #points.append(start)
-
-                        #this = start
-                        #convex = [start]
-                        #while points[0] != start and self.turn_left(this,points[0],points[1]):
-                            #this = points[0]
-                            #convex.append(this)
-                            #points.remove(this)
-                        #if points[0] != start:
-                            #convex.append(points[0])
-                        #convexes.append(convex)
-
-                #for points in convexes:
-                    #while len(points)>=3:
-                        #(p1,p2,p3) = points[0:3]
-                        #bad = False
-                        #triangle = (p1,p2,p3)
-                        #assert self.turn_left(*triangle)
-                        #for p in face: #points[3:]:
-                            #if p!=p1 and p!=p2 and p!=p3 and self.in_triangle(p, triangle):
-                                #print "Not doing triange ",triangle," because of ",p," trying to fit ",points
-
-                        #if bad:
-                            #print "Not doing triange ",triangle," because of ",p," trying to fit ",points
-                            #points.remove(p1)
-                            #points.append(p1)
-                        #else:
-                            #self.triangulation.append((triangle, i))
-                            #points.remove(p2)
-
     def turn_left(self, (x1,y1), (x2,y2), (x3,y3)):
         alpha = math.atan2((x2-x1),(y2-y1))
         beta = math.atan2((x3-x1),(y3-y1))
