@@ -309,7 +309,6 @@ class Graph(object):
         beta = math.atan2((x3-x1),(y3-y1))
         return 0 <= beta-alpha <= math.pi or beta - alpha <= -math.pi
 
-
     def bbox(self, points):
         return (min(map(lambda (x,y):x, points)),
                 max(map(lambda (x,y):x, points)),
