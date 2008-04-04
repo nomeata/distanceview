@@ -341,6 +341,7 @@ class DistanceView:
         self.last_update = 0
         self.point_selected = None
         self.hover_point = None
+        self.last_mouse_pos = None
 
         self.image = gtk.DrawingArea()
         self.image.set_size_request(self.width, self.height)
@@ -511,6 +512,14 @@ class DistanceView:
                 cr.line_to(*p3)
                 cr.line_to(*p1)
                 cr.fill()
+
+            if self.last_mouse_pos:
+                face = self.graph.on_face(self.last_mouse_pos)
+                if face != self.graph.faces[self.graph.outer_face]:
+                    cr.move_to(*face[-1])
+                    for p in face:
+                        cr.line_to(*p)
+                    cr.fill()
         cr.set_source_rgba(0,0.8,0,0.8)
         for (s,t) in self.graph.edges:
             cr.move_to(*s)
@@ -624,6 +633,8 @@ class DistanceView:
     def do_motion_notify_event(self, widget, event):
         if 0<=event.x<self.width and 0<=event.y<self.height:
             p = (int(round(event.x)),int(round(event.y)))
+
+            self.last_mouse_pos = p
             if self.d:
                 self.selected_d = self.d[p]
                 self.status.set_text("(%d,%d): %d" % (event.x, event.y, self.selected_d))
