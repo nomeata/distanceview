@@ -83,16 +83,22 @@ selection_distance = 10
 
 def dist2((x1,y1),(x2,y2)):
     return ((x1-x2)**2 + (y1-y2)**2)
+
 def dist((x1,y1),(x2,y2)):
     return math.sqrt((x1-x2)**2 + (y1-y2)**2)
+
 def find_footpoint((p1,p2),(x,y)):
     (x1,y1) = p1
     (x2,y2) = p2
     u = float((x-x1)*(x2-x1) + (y - y1)*(y2 - y1)) / float((x1-x2)**2 + (y1-y2)**2)
     if u<0: u=0
     if u>1: u=1
-    return (int(round(x1 + u*(x2-x1))),
-            int(round(y1 + u*(y2-y1))))
+    f = (int(round(x1 + u*(x2-x1))), int(round(y1 + u*(y2-y1))))
+    if u < 0.5:
+        return (f,p1)
+    else:
+        return (f,p2)
+
 def convex(r, (r1,g1,b1), (r2,g2,b2)):
     return ((1-r) * r1 + r * r2,
             (1-r) * g1 + r * g2,
@@ -117,7 +123,7 @@ class Graph(object):
 
     def nearest_point(self, p):
         if self.vertices:
-            return min(self.vertices, key=lambda v: dist(p,v))
+            return min(self.vertices, key=lambda v: dist2(p,v))
         else:
             return (-100,-100)
 
@@ -320,6 +326,13 @@ class Graph(object):
 
     def in_triangle(self,(x,y),((x1,y1),(x2,y2),(x3,y3))):
         # from http://www.blackpawn.com/texts/pointinpoly/default.html
+
+        if ((x < x1 and x < x2 and x < x3) or\
+            (y < y1 and y < y2 and y < y3) or\
+            (x > x1 and x > x2 and x > x3) or\
+            (y > y1 and y > y2 and y > y3)):
+            return False
+
         vx0 = x3-x1
         vy0 = y3-y1
         vx1 = x2-x1
@@ -729,6 +742,7 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                     todo.append(t)
             self.update_gui(True)
 
+        penalty = self.penalty.get_value_as_int() 
         self.progress.set_text('Off-Graph')
         for x in range(self.width):
             self.progress.set_fraction(float(x)/float(self.width))
@@ -750,9 +764,9 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                     # Best footpoint:
                     #for (p1,p2) in self.graph.edges:
                     for (p1,p2) in self.graph.near_edges(p):
-                        f = find_footpoint((p1,p2),p)
-                        df = min(d[p1] + dist(p1,f), d[p2] + dist(p2,f))
-                        d[p] = min(d[p], df + self.penalty.get_value_as_int() * dist(f,p))
+                        f,c = find_footpoint((p1,p2),p)
+                        df = d[c] + dist(f,c)
+                        d[p] = min(d[p], df + penalty * dist(f,p))
 
         #self.progress.set_text('Dumping data')
         #self.progress.set_fraction(0)
