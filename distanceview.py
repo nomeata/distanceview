@@ -109,6 +109,8 @@ class Graph(object):
         self.vertices = []
         self.edges = []
         self.start = None
+        
+        self.grid_size = 4 # 16x16
 
     def dump(self):
         return (self.vertices, self.edges, self.start)
@@ -131,15 +133,16 @@ class Graph(object):
         if not self.in_bbox(p, self.max_bounds):
             return self.face_to_edges(self.faces[self.outer_face])
         
-        edges = []
-        for t, i in self.triangulation:
+        (x,y) = p
+        (bx,_,by,_) = self.max_bounds
+        faces = set()
+        for t, i in self.tri_grid[(x-bx)>>self.grid_size][(y-by)>>self.grid_size]:
             if self.in_triangle(p, t):
-                edges.extend(self.face_to_edges(self.faces[i]))
+                return self.face_to_edges(self.faces[i])
+                break
 
-        if not edges: # not contained in anything? probably outer face:
-            return self.face_to_edges(self.faces[self.outer_face])
-
-        return edges
+        # not contained in anything? probably outer face:
+        return self.face_to_edges(self.faces[self.outer_face])
 
     def alone(self,p):
         for (p1,p2) in self.edges:
@@ -269,6 +272,20 @@ class Graph(object):
                     else:
                         i = i+1
                 self.triangulation.append((tuple(points[:3]), facenum))
+
+        # Square grid for faster location querys, hopefully
+        (bx1,bx2,by1,by2) = self.max_bounds
+        cache_width = (bx2-bx1+1) >> self.grid_size
+        cache_height = (by2-by1+1) >> self.grid_size
+        self.tri_grid = Numeric.zeros((cache_width+1,cache_height+1,len(self.triangulation)+1),'O')
+        self.tri_grid = [[[] for i in range(cache_height+1)] for j in range(cache_width+1)]
+        for td in self.triangulation:
+            (((x1,y1),(x2,y2),(x3,y3)),i) = td
+            for x in range( min(x1,x2,x3)-bx1 >> self.grid_size,
+                            (max(x1,x2,x3)-bx1 >> self.grid_size)+1):
+                for y in range( min(y1,y2,y3)-by1 >> self.grid_size,
+                                (max(y1,y2,y3)-by1 >> self.grid_size)+1):
+                    self.tri_grid[x][y].append(td)
 
     def turn_left(self, (x1,y1), (x2,y2), (x3,y3)):
         alpha = math.atan2((x2-x1),(y2-y1))
