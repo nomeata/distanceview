@@ -707,7 +707,7 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         self.prepare_progress()
         self.progress.set_text('Preparing array')
         self.update_gui()
-        d = Numeric.zeros((self.width,self.height), 'i')
+        d = self.d = Numeric.zeros((self.width,self.height), 'i')
         for x in range(self.width):
             self.update_gui(True)
             for y in range(self.height):
@@ -760,8 +760,6 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         #self.update_gui()
         #pickle.dump(d, file('distance_map.data','w'))
 
-        self.d = d
-        
         self.reset_progress()
     
     def recalc_heightmap(self):
