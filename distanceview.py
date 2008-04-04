@@ -743,6 +743,7 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                         gtk.gdk.COLORSPACE_RGB, 8)
             if 'mz' in data:
                 self.moved_zoom = data['mz']
+                self.zoom.set_value(self.moved_zoom)
             if 'penalty' in data:
                 self.penalty.set_value(data['penalty'])
 
