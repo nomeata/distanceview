@@ -674,7 +674,12 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                     npx = int(round(cx + (x-sx)*d[p]/size))
                     npy = int(round(cy + (y-sy)*d[p]/size))
                     if 0<= npx < self.width and 0<= npy < self.height:
-                        f[npx,npy,:] = (y,x)
+                        if f[npx,npy] != (0,0):
+                            # already something there, make sure the closer one wins
+                            if dist(f[npx,npy], self.graph.start) *z > size:
+                                f[npx,npy,:] = (y,x)
+                        else:
+                            f[npx,npy,:] = (y,x)
                 else:
                     f[cx,cy,:] = (y,x)
         
