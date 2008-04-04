@@ -428,8 +428,12 @@ class DistanceView:
         self.show_heigthmap = gtk.CheckButton('Show heightmap')
         self.show_heigthmap.props.active = True
         self.show_heigthmap.connect('toggled', self.queue_draw)
+        self.show_triangulation = gtk.CheckButton('Show Triangulation')
+        self.show_triangulation.props.active = False
+        self.show_triangulation.connect('toggled', self.queue_draw)
         vbox_heightmap = gtk.VBox()
         vbox_heightmap.add(self.show_heigthmap)
+        vbox_heightmap.add(self.show_triangulation)
 
         hbox2 = gtk.HBox()
         hbox2.pack_start(do_open, expand=False)
@@ -499,7 +503,7 @@ class DistanceView:
         cr.rectangle(event.area.x, event.area.y, event.area.width, event.area.height)
         cr.clip()
 
-        if True: # display triangulation
+        if self.show_triangulation.props.active:
             for (p1,p2,p3),_ in self.graph.triangulation:
                 cr.set_source_rgba(0.4,0.8,0.4,0.8)
                 cr.move_to(*p1)
