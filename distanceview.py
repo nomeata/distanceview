@@ -203,17 +203,14 @@ class Graph(object):
         self.bounding_boxes = map(self.bbox, self.faces)
 
         self.outer_face = None
-        for i in range(len(self.faces)):
-            # first estimate
-            if self.bounding_boxes[i] == self.max_bounds:
-                face = self.faces[i]
-                north_point_index = min(range(len(face)), key=lambda j:face[j][1])
-                north_point = face[north_point_index]
-                next = face[(north_point_index+1) % len(face) ]
-                prev = face[(north_point_index-1) % len(face) ]
-                if prev[0] < next[0]:
-                    # this seems to be an outer face
-                    self.outer_face = i
+        for i, face in enumerate(self.faces):
+            north_point_index = min(range(len(face)), key=lambda j:face[j][1])
+            north_point = face[north_point_index]
+            next = face[(north_point_index+1) % len(face) ]
+            prev = face[(north_point_index-1) % len(face) ]
+            if not self.turn_left(prev, north_point, next):
+                # this seems to be an outer face
+                self.outer_face = i
 
         self.triangulation = []
         for facenum, face in enumerate(self.faces):
