@@ -183,13 +183,18 @@ class Graph(object):
         edges_to_try = self.edges[:]
         edges_to_try.extend(map(lambda (p1,p2):(p2,p1), self.edges))
         while edges_to_try:
-            (f,t) = edges_to_try.pop()
-            face = [f]
-            while t != face[0]:
-                face.append(t)
+            (f,t) = edges_to_try[0]
+            first_edge = None
+            face = []
+            while (f,t) != first_edge:
+                if not first_edge:
+                    first_edge = (f,t)
+                    #print "First edge: ",first_edge
+                face.append(f)
                 incoming_index = self.edgelist[t].index(f)
                 next_index = (incoming_index-1) % len(self.edgelist[t])
                 (f,t) = (t, self.edgelist[t][next_index])
+                #print "to try: ", edges_to_try, " going to ",(f,t)
                 edges_to_try.remove((f,t))
             self.faces.append(face)
 
@@ -213,8 +218,7 @@ class Graph(object):
         self.triangulation = []
         for facenum, face in enumerate(self.faces):
             # From http://citeseer.ist.psu.edu/164823.html
-            if i != self.outer_face:
-
+            if facenum != self.outer_face:
                 points = face[:] + face[0:2]
 
                 concaves = []
@@ -236,17 +240,20 @@ class Graph(object):
                         else:
                             is_ear = False
 
-                    if is_ear and len(points) > 4:
+                    if is_ear: # and len(points) > 4:
                         self.triangulation.append((tuple(points[i-2:i+1]), facenum))
-                        points.remove(points[i-1])
-                        if points[i] in concaves and self.turn_left(*points[i-1:i+2]):
+                        if points[i-2] in concaves and\
+                            self.turn_left(points[i-3],points[i-2],points[i]):
+                            concaves.remove(points[i-2])
+                        if points[i] in concaves and\
+                            self.turn_left(points[i-2],points[i],points[i+1]):
                             concaves.remove(points[i])
-                        if points[i-1] in concaves and self.turn_left(*points[i-2:i+1]):
-                            concaves.remove(points[i-1])
+                        points.remove(points[i-1])
                         if points[i-1] == points[0]:
                             i = i+1
                     else:
                         i = i+1
+                self.triangulation.append((tuple(points[:3]), facenum))
 
                 #convexes = []
                 #points = face[:]
