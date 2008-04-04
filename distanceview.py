@@ -206,6 +206,90 @@ class Graph(object):
                     # this seems to be an outer face
                     self.outer_face = i
 
+        self.triangulation = []
+        for facenum, face in enumerate(self.faces):
+            # From http://citeseer.ist.psu.edu/164823.html
+            if i != self.outer_face:
+
+                points = face[:] + face[0:2]
+
+                concaves = []
+                for i in range(1,len(points)-1):
+                    if not self.turn_left(*points[i-1:i+2]):
+                        concaves.append(points[i])
+
+                i = 2
+                while points[i] != points[0]:
+                    is_ear = False
+                    if not concaves:
+                        is_ear = True
+                    else:
+                        if points[i-1] not in concaves:
+                            is_ear = True
+                            for p in concaves:
+                                if self.in_triangle(p,points[i-2:i+1]):
+                                    is_ear = False
+                        else:
+                            is_ear = False
+
+                    if is_ear and len(points) > 4:
+                        self.triangulation.append((tuple(points[i-2:i+1]), facenum))
+                        points.remove(points[i-1])
+                        if points[i] in concaves and self.turn_left(*points[i-1:i+2]):
+                            concaves.remove(points[i])
+                        if points[i-1] in concaves and self.turn_left(*points[i-2:i+1]):
+                            concaves.remove(points[i-1])
+                        if points[i-1] == points[0]:
+                            i = i+1
+                    else:
+                        i = i+1
+
+                #convexes = []
+                #points = face[:]
+                #while len(points)>=3:
+                    #start = points[0]
+                    #if not self.turn_left(start, points[1], points[2]):
+                        ## bad starting point
+                        #points.remove(start)
+                        #points.append(start)
+                    #else:
+                        #points.remove(start)
+                        #points.append(start)
+
+                        #this = start
+                        #convex = [start]
+                        #while points[0] != start and self.turn_left(this,points[0],points[1]):
+                            #this = points[0]
+                            #convex.append(this)
+                            #points.remove(this)
+                        #if points[0] != start:
+                            #convex.append(points[0])
+                        #convexes.append(convex)
+
+                #for points in convexes:
+                    #while len(points)>=3:
+                        #(p1,p2,p3) = points[0:3]
+                        #bad = False
+                        #triangle = (p1,p2,p3)
+                        #assert self.turn_left(*triangle)
+                        #for p in face: #points[3:]:
+                            #if p!=p1 and p!=p2 and p!=p3 and self.in_triangle(p, triangle):
+                                #print "Not doing triange ",triangle," because of ",p," trying to fit ",points
+
+                        #if bad:
+                            #print "Not doing triange ",triangle," because of ",p," trying to fit ",points
+                            #points.remove(p1)
+                            #points.append(p1)
+                        #else:
+                            #self.triangulation.append((triangle, i))
+                            #points.remove(p2)
+
+    def turn_left(self, (x1,y1), (x2,y2), (x3,y3)):
+        alpha = math.atan2((x2-x1),(y2-y1))
+        beta = math.atan2((x3-x1),(y3-y1))
+        return 0 <= beta-alpha <= math.pi or beta - alpha <= -math.pi
+
+
     def bbox(self, points):
         return (min(map(lambda (x,y):x, points)),
                 max(map(lambda (x,y):x, points)),
@@ -214,6 +298,26 @@ class Graph(object):
 
     def in_bbox(self,(x,y),(min_x,max_x,min_y,max_y)):
         return min_x <= x <= max_x and min_y <= y <= max_y
+
+    def in_triangle(self,(x,y),((x1,y1),(x2,y2),(x3,y3))):
+        # from http://www.blackpawn.com/texts/pointinpoly/default.html
+        vx0 = x3-x1
+        vy0 = y3-y1
+        vx1 = x2-x1
+        vy1 = y2-y1
+        vx2 = x-x1
+        vy2 = y-y1
+
+        dot00 = vx0*vx0 + vy0*vy0
+        dot01 = vx0*vx1 + vy0*vy1
+        dot02 = vx0*vx2 + vy0*vy2
+        dot11 = vx1*vx1 + vy1*vy1
+        dot12 = vx1*vx2 + vy1*vy2
+        
+        denom = dot00 * dot11 - dot01 * dot01
+        u = dot11 * dot02 - dot01 * dot12
+        v = dot00 * dot12 - dot01 * dot02
+        return u * denom > 0 and v * denom > 0 and u + v < denom
 
     def face_to_edges(self, face):
         return zip(face, face[1:] + [face[0]])
@@ -398,6 +502,14 @@ class DistanceView:
             x,y = self.graph.start
             cr.arc(x,y,5,0, 2 * math.pi)
             cr.fill()
+        if False: # display triangulation
+            for (p1,p2,p3),_ in self.graph.triangulation:
+                cr.set_source_rgba(0.4,0.8,0.4,0.8)
+                cr.move_to(*p1)
+                cr.line_to(*p2)
+                cr.line_to(*p3)
+                cr.line_to(*p1)
+                cr.stroke()
 
         if self.graph_edit.props.active and self.point_selected:
             x,y = self.point_selected
