@@ -90,14 +90,8 @@ def dist((x1,y1),(x2,y2)):
 def find_footpoint((p1,p2),(x,y)):
     (x1,y1) = p1
     (x2,y2) = p2
-    u = float((x-x1)*(x2-x1) + (y - y1)*(y2 - y1)) / float((x1-x2)**2 + (y1-y2)**2)
-    if u<0: u=0
-    if u>1: u=1
-    f = (int(round(x1 + u*(x2-x1))), int(round(y1 + u*(y2-y1))))
-    if u < 0.5:
-        return (f,p1)
-    else:
-        return (f,p2)
+    u = float((x-x1)*(x2-x1) + (y-y1)*(y2-y1)) / float((x1-x2)**2 + (y1-y2)**2)
+    return (int(round(x1 + u*(x2-x1))), int(round(y1 + u*(y2-y1))))
 
 def convex(r, (r1,g1,b1), (r2,g2,b2)):
     return ((1-r) * r1 + r * r2,
@@ -756,9 +750,9 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                     # Best footpoint:
                     #for (p1,p2) in self.graph.edges:
                     for (p1,p2) in self.graph.near_edges(p):
-                        f,c = find_footpoint((p1,p2),p)
-                        df = d[c] + dist(f,c)
-                        d[p] = min(d[p], df + penalty * dist(f,p))
+                        f = find_footpoint((p1,p2),p)
+                        c = min((p1,p2), key=lambda pt: d[pt])
+                        d[p] = min(d[p], d[c] + dist(c,f) + penalty * dist(f,p))
 
         #self.progress.set_text('Dumping data')
         #self.progress.set_fraction(0)
