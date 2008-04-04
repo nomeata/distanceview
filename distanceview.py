@@ -117,7 +117,7 @@ class Graph(object):
         else:
             return (-100,-100)
 
-    def close_edges(self,p):
+    def near_edges(self,p):
         if not self.in_bbox(p, self.max_bounds):
             return self.face_to_edges(self.faces[self.outer_face])
         
@@ -727,7 +727,7 @@ Right click anywhere ot adda vertex and an edge in one go.'''
 
                     # Best footpoint:
                     #for (p1,p2) in self.graph.edges:
-                    for (p1,p2) in self.graph.close_edges(p):
+                    for (p1,p2) in self.graph.near_edges(p):
                         f = find_footpoint((p1,p2),p)
                         df = min(d[p1] + dist(p1,f), d[p2] + dist(p2,f))
                         d[p] = min(d[p], df + self.penalty.get_value_as_int() * dist(f,p))
