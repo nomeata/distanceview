@@ -122,8 +122,8 @@ class Graph(object):
             return self.face_to_edges(self.faces[self.outer_face])
         
         edges = []
-        for i in range(len(self.faces)):
-            if i != self.outer_face and self.in_bbox(p, self.bounding_boxes[i]):
+        for t, i in self.triangulation:
+            if self.in_triangle(p, t):
                 edges.extend(self.face_to_edges(self.faces[i]))
 
         if not edges: # not contained in anything? probably outer face:
