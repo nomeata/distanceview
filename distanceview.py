@@ -108,7 +108,11 @@ class Graph(object):
         return (self.vertices, self.edges, self.start)
 
     def load(self,dump):
-        (self.vertices, self.edges, self.start) = dump
+        (self.vertices, edges, self.start) = dump
+        self.edges = []
+        for (p1,p2) in edges:
+            if p1 in self.vertices and p2 in self.vertices:
+                self.edges.append((p1,p2))
         self.update_edgelists()
 
     def nearest_point(self, p):
