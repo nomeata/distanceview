@@ -754,11 +754,6 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                         c = min((p1,p2), key=lambda pt: d[pt])
                         d[p] = min(d[p], d[c] + dist(c,f) + penalty * dist(f,p))
 
-        #self.progress.set_text('Dumping data')
-        #self.progress.set_fraction(0)
-        #self.update_gui()
-        #pickle.dump(d, file('distance_map.data','w'))
-
         self.reset_progress()
     
     def recalc_heightmap(self):
@@ -777,10 +772,6 @@ Right click anywhere ot adda vertex and an edge in one go.'''
             for y in range(self.height):
                 a = 255 - min(d[x,y]//3,255)
                 i[y,x,:]= (255,0,0,a)
-
-        #self.progress.set_text('Writing height data')
-        #self.update_gui()
-        #pickle.dump(i, file('height_map.data','w'))
 
         self.reset_progress()
 
@@ -815,10 +806,6 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                 else:
                     f[cx,cy,:] = (y,x)
         
-        #self.progress.set_text('Writing transformation data')
-        #self.update_gui()
-        #pickle.dump(f,file('function.data','w'))
-
         self.f = f
 
         self.reset_progress()
@@ -829,11 +816,6 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         o = self.pixbuf.get_pixels_array()
 
         self.interpolate(o,m,f)
-
-        #self.progress.set_text('Writing morphed image')
-        #self.update_gui()
-        #pickle.dump(m,file('output.data','w'))
-
 
         self.moved_zoom = z
         self.m = m
