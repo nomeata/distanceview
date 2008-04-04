@@ -490,6 +490,14 @@ class DistanceView:
         cr.rectangle(event.area.x, event.area.y, event.area.width, event.area.height)
         cr.clip()
 
+        if True: # display triangulation
+            for (p1,p2,p3),_ in self.graph.triangulation:
+                cr.set_source_rgba(0.4,0.8,0.4,0.8)
+                cr.move_to(*p1)
+                cr.line_to(*p2)
+                cr.line_to(*p3)
+                cr.line_to(*p1)
+                cr.fill()
         cr.set_source_rgba(0,0.8,0,0.8)
         for (s,t) in self.graph.edges:
             cr.move_to(*s)
@@ -502,14 +510,6 @@ class DistanceView:
             x,y = self.graph.start
             cr.arc(x,y,5,0, 2 * math.pi)
             cr.fill()
-        if False: # display triangulation
-            for (p1,p2,p3),_ in self.graph.triangulation:
-                cr.set_source_rgba(0.4,0.8,0.4,0.8)
-                cr.move_to(*p1)
-                cr.line_to(*p2)
-                cr.line_to(*p3)
-                cr.line_to(*p1)
-                cr.stroke()
 
         if self.graph_edit.props.active and self.point_selected:
             x,y = self.point_selected
