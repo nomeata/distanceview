@@ -130,19 +130,20 @@ class Graph(object):
             return (-100,-100)
 
     def near_edges(self,p):
+        return self.face_to_edges(self.on_face(p))
+
+    def on_face(self,p):
         if not self.in_bbox(p, self.max_bounds):
-            return self.face_to_edges(self.faces[self.outer_face])
+            return self.faces[self.outer_face]
         
         (x,y) = p
         (bx,_,by,_) = self.max_bounds
-        faces = set()
-        for t, i in self.tri_grid[(x-bx)>>self.grid_size][(y-by)>>self.grid_size]:
+        for t, i in self.tri_grid[x - bx >>self.grid_size][ y - by >>self.grid_size]:
             if self.in_triangle(p, t):
-                return self.face_to_edges(self.faces[i])
-                break
+                return self.faces[i]
 
         # not contained in anything? probably outer face:
-        return self.face_to_edges(self.faces[self.outer_face])
+        return self.faces[self.outer_face]
 
     def alone(self,p):
         for (p1,p2) in self.edges:
@@ -275,10 +276,9 @@ class Graph(object):
 
         # Square grid for faster location querys, hopefully
         (bx1,bx2,by1,by2) = self.max_bounds
-        cache_width = (bx2-bx1+1) >> self.grid_size
-        cache_height = (by2-by1+1) >> self.grid_size
-        self.tri_grid = Numeric.zeros((cache_width+1,cache_height+1,len(self.triangulation)+1),'O')
-        self.tri_grid = [[[] for i in range(cache_height+1)] for j in range(cache_width+1)]
+        cache_width =  ((bx2-bx1+1 >> self.grid_size)+1)
+        cache_height = ((by2-by1+1 >> self.grid_size)+1)
+        self.tri_grid = [[[] for i in range(cache_height)] for j in range(cache_width)]
         for td in self.triangulation:
             (((x1,y1),(x2,y2),(x3,y3)),i) = td
             for x in range( min(x1,x2,x3)-bx1 >> self.grid_size,
