@@ -622,6 +622,8 @@ class DistanceView:
                
                 if not self.graph_edit.props.active and not self.progress.props.sensitive:
                     self.queue_draw()
+            else:
+                self.status.set_text("(%d,%d)" % (event.x, event.y))
         
             if self.graph_edit.props.active:
                 n = self.graph.nearest_point(p)
