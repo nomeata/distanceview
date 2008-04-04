@@ -404,9 +404,23 @@ class DistanceView:
         hbox_interpolator = gtk.HBox()
         hbox_interpolator.add(gtk.Label('Interpolation:'))
         hbox_interpolator.add(self.interpolator)
+
+        self.morpher = gtk.combo_box_new_text()
+        self.morphers = {
+                'Radial': self.morpher_radial
+            }
+        keys = self.morphers.keys()
+        keys.sort()
+        for k in keys:
+            self.morpher.append_text(k)
+        self.morpher.set_active(keys.index('Radial'))
+        hbox_morpher = gtk.HBox()
+        hbox_morpher.add(gtk.Label('Morpher:'))
+        hbox_morpher.add(self.morpher)
         
         vbox_morph = gtk.VBox()
         vbox_morph.add(hbox_interpolator)
+        vbox_morph.add(hbox_morpher)
         vbox_morph.add(hbox_zoom)
 
         self.penalty = gtk.SpinButton()
@@ -778,13 +792,31 @@ Right click anywhere ot adda vertex and an edge in one go.'''
     def recalc_morph(self):
         if self.d is None:
             self.recalc_distance()
-        d = self.d
-
-        z = self.zoom.get_value()
 
         self.prepare_progress()
         self.progress.set_text('Calculating transformation')
         f = Numeric.zeros((self.width,self.height,2),'i')
+
+        choice = self.morpher.get_active_text()
+        self.morphers[choice](f)
+        self.reset_progress()
+
+        self.prepare_progress()
+        self.progress.set_text('Calculating Morphed Image')
+        m = Numeric.zeros((self.height,self.width,3),'b')
+        o = self.pixbuf.get_pixels_array()
+
+        choice = self.interpolator.get_active_text()
+        self.interpolators[choice](o, m, f)
+
+        self.moved_zoom = self.zoom.get_value()
+        self.m = m
+        self.pixbuf_moved = gtk.gdk.pixbuf_new_from_array(m, gtk.gdk.COLORSPACE_RGB, 8)
+        self.reset_progress()
+        
+    def morpher_radial(self, f):
+        d = self.d
+        z = self.zoom.get_value()
         (cx,cy) = (self.width/2, self.height/2)
         (sx,sy) = self.graph.start
         for x in range(self.width):
@@ -805,26 +837,6 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                             f[npx,npy,:] = (y,x)
                 else:
                     f[cx,cy,:] = (y,x)
-        
-        self.f = f
-
-        self.reset_progress()
-
-        self.prepare_progress()
-        self.progress.set_text('Calculating Morphed Image')
-        m = Numeric.zeros((self.height,self.width,3),'b')
-        o = self.pixbuf.get_pixels_array()
-
-        self.interpolate(o,m,f)
-
-        self.moved_zoom = z
-        self.m = m
-        self.pixbuf_moved = gtk.gdk.pixbuf_new_from_array(m, gtk.gdk.COLORSPACE_RGB, 8)
-        self.reset_progress()
-
-    def interpolate(self, o, m, f):
-        choice = self.interpolator.get_active_text()
-        self.interpolators[choice](o, m, f)
 
     def interpolate_blocks(self, o, m, f):
         for x in range(self.width):
