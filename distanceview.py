@@ -216,7 +216,19 @@ class Graph(object):
         for facenum, face in enumerate(self.faces):
             # From http://citeseer.ist.psu.edu/164823.html
             if facenum != self.outer_face:
-                points = face[:] + face[0:2]
+                points = face[:]
+
+                # Remove points with only one neighbor
+                i = 0
+                while i<len(points)-2:
+                    if points[i] == points[i+2]:
+                        points.remove(points[i+1])
+                    else:
+                        i += 1
+                if len(points) <= 2:
+                    continue
+
+                points.extend(points[:2])
 
                 concaves = []
                 for i in range(1,len(points)-1):
