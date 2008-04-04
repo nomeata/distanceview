@@ -542,9 +542,8 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                     # Best footpoint:
                     for (p1,p2) in self.graph.edges:
                         f = find_footpoint((p1,p2),p)
-                        if d[f] == far:
-                            d[f] = min(d[p1] + dist(p1,f), d[p2] + dist(p2,f))
-                        d[p] = min(d[p], d[f] + self.penalty.get_value_as_int() * dist(f,p))
+                        df = min(d[p1] + dist(p1,f), d[p2] + dist(p2,f))
+                        d[p] = min(d[p], df + self.penalty.get_value_as_int() * dist(f,p))
 
         #self.progress.set_text('Dumping data')
         #self.progress.set_fraction(0)
