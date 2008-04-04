@@ -959,6 +959,8 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                 self.zoom.set_value(float(self.moved_zoom))
             if 'penalty' in data:
                 self.penalty.set_value(data['penalty'])
+        
+        self.queue_draw()
 
     def save_files(self):
         assert self.filename, "No file open at the moment"
