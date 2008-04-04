@@ -944,9 +944,9 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                 self.m = data['m']
                 self.pixbuf_moved = gtk.gdk.pixbuf_new_from_array(self.m,
                         gtk.gdk.COLORSPACE_RGB, 8)
-            if 'mz' in data:
+            if 'mz' in data and data['mz']:
                 self.moved_zoom = data['mz']
-                self.zoom.set_value(self.moved_zoom)
+                self.zoom.set_value(float(self.moved_zoom))
             if 'penalty' in data:
                 self.penalty.set_value(data['penalty'])
 
