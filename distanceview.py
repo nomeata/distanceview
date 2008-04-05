@@ -346,8 +346,9 @@ class DistanceView:
         self.selected_d = 0
         self.last_update = 0
         self.point_selected = None
-        self.hover_point = None
-        self.last_mouse_pos = None
+        self.hover_vertex = None
+        self.last_mouse_pos_orig = None
+        self.last_mouse_pos_moved = None
 
         self.image = gtk.DrawingArea()
         self.image.set_size_request(self.width, self.height)
@@ -357,7 +358,7 @@ class DistanceView:
                         gtk.gdk.POINTER_MOTION_MASK)
         self.image.connect("expose_event",self.do_expose_event_orig)
         self.image.connect("button_press_event",self.do_button_press_event)
-        self.image.connect("motion_notify_event",self.do_motion_notify_event)
+        self.image.connect("motion_notify_event",self.do_motion_orig)
 
         self.moved = gtk.DrawingArea()
         self.moved.set_size_request(self.width, self.height)
@@ -366,6 +367,7 @@ class DistanceView:
                         gtk.gdk.EXPOSURE_MASK |
                         gtk.gdk.POINTER_MOTION_MASK)
         self.moved.connect("expose_event",self.do_expose_event_moved)
+        self.moved.connect("motion_notify_event",self.do_motion_moved)
 
         hbox1 = gtk.HBox()
         hbox1.add(self.image)
@@ -543,8 +545,8 @@ class DistanceView:
                 cr.line_to(*p1)
                 cr.fill()
 
-            if self.last_mouse_pos:
-                face = self.graph.on_face(self.last_mouse_pos)
+            if self.last_mouse_pos_orig:
+                face = self.graph.on_face(self.last_mouse_pos_orig)
                 if face != self.graph.faces[self.graph.outer_face]:
                     cr.move_to(*face[-1])
                     for p in face:
@@ -569,23 +571,23 @@ class DistanceView:
             cr.arc(x,y,5,0, 2 * math.pi)
             cr.fill()
         
-        if self.graph_edit.props.active and self.hover_point:
-            x,y = self.hover_point
+        if self.graph_edit.props.active and self.hover_vertex:
+            x,y = self.hover_vertex
             cr.set_source_rgba(0.5,0.5,1,1)
             cr.arc(x,y,5,0, 2 * math.pi)
             cr.fill()
 
             if self.point_selected:
-                if self.graph.has_edge((self.point_selected, self.hover_point)):
+                if self.graph.has_edge((self.point_selected, self.hover_vertex)):
                     cr.set_source_rgba(1,0.5,0.5,1)
                 else:
                     cr.set_source_rgba(0.5,0.5,1,1)
                 cr.move_to(*self.point_selected)
-                cr.line_to(*self.hover_point)
+                cr.line_to(*self.hover_vertex)
                 cr.stroke()
         
-        if self.d and self.last_mouse_pos and self.show_int_path.props.active:
-            self.draw_integration_path(cr, self.last_mouse_pos)
+        if self.d and self.last_mouse_pos_moved and self.show_int_path.props.active:
+            self.draw_integration_path(cr, self.last_mouse_pos_moved)
 
     def do_expose_event_moved(self, widget, event):
         gc = widget.window.new_gc()
@@ -637,7 +639,7 @@ class DistanceView:
                             if self.graph.alone(n):
                                 self.graph.delete_vertex(n)
                                 self.point_selected = None
-                                self.hover_point = None
+                                self.hover_vertex = None
                         else:
                             self.graph.toggle_edge((self.point_selected, n))
             self.queue_draw()
@@ -663,11 +665,11 @@ class DistanceView:
                     el[y,x,:]= (0,255,255,a)
         return pb
 
-    def do_motion_notify_event(self, widget, event):
+    def do_motion_orig(self, widget, event):
         if 0<=event.x<self.width and 0<=event.y<self.height:
             p = (int(round(event.x)),int(round(event.y)))
 
-            self.last_mouse_pos = p
+            self.last_mouse_pos_orig = p
             if self.d:
                 self.selected_d = self.d[p]
                 self.status.set_text("(%d,%d): %d" % (event.x, event.y, self.selected_d))
@@ -681,10 +683,23 @@ class DistanceView:
             if self.graph_edit.props.active:
                 n = self.graph.nearest_point(p)
                 if dist(n,p) < selection_distance:
-                    self.hover_point = n
+                    self.hover_vertex = n
                 else:
-                    self.hover_point = None
+                    self.hover_vertex = None
                 self.queue_draw()
+    
+    def do_motion_moved(self, widget, event):
+        if 0<=event.x<self.width and 0<=event.y<self.height:
+            p = (int(round(event.x)),int(round(event.y)))
+            self.last_mouse_pos_moved = p
+
+            c = (self.width/2, self.height/2)
+            z = self.zoom.get_value()
+            value = int(dist(c,p)*z)
+            self.selected_d = value
+            self.status.set_text("(%d,%d): %d" % (event.x, event.y, self.selected_d))
+
+            self.queue_draw()
     
     def do_change_value(self, widget, scroll, value):
         value = int(value)
@@ -845,22 +860,21 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         (sx,sy) = self.graph.start
         
         (x,y) = p
-        size = dist(p,(cx,cy)) / z
+        size = dist(p,(cx,cy)) * z
         if size > step:
             tx = sx + (float(x-cx) / size * step)
             ty = sy + (float(y-cy) / size * step)
             i = 0
             l = 1000
-            while size > step and i < 50 and l>step/20:
+            while d[int(tx),int(ty)] < size and i < 50 and l>step/20:
                 callback(tx,ty)
                 (dx,dy) = self.gradient((int(tx),int(ty)))
                 l = length((dx,dy))
                 if l > step/20:
-                    size -= l
                     tx += dx
                     ty += dy
                 else:
-                    size = 0
+                    i = 100
                 i += 1
             return (tx,ty)
         else:
