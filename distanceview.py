@@ -566,6 +566,12 @@ class DistanceView:
                 cr.move_to(*self.point_selected)
                 cr.line_to(*self.hover_point)
                 cr.stroke()
+        
+        if self.d and self.last_mouse_pos:
+            cr.set_source_rgba(0,0,0,1)
+            cr.move_to(*self.last_mouse_pos)
+            cr.rel_line_to(*self.gradient(self.last_mouse_pos))
+            cr.stroke()
 
     def do_expose_event_moved(self, widget, event):
         gc = widget.window.new_gc()
@@ -901,6 +907,15 @@ Right click anywhere ot adda vertex and an edge in one go.'''
             for y in range(self.height):
                 if f[x,y] != (0,0):
                     m[y,x] = o[f[x,y]]
+
+    def gradient(self,(x,y)):
+        # Sobel filter:
+        d = self.d
+        factor = -16
+        return( factor * float(   (d[x+1,y-1] + 2*d[x+1,y] + d[x+1,y+1])
+                                 -(d[x-1,y-1] + 2*d[x-1,y] + d[x-1,y+1]) )/8,
+                factor *      (   (d[x-1,y+1] + 2*d[x,y+1] + d[x+1,y+1])
+                                 -(d[x-1,y-1] + 2*d[x,y-1] + d[x+1,y-1]) )/8)
 
     def recalc_all(self):
         self.recalc_distance()
