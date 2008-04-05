@@ -832,7 +832,7 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         self.reset_progress()
 
         self.prepare_progress()
-        self.progress.set_text('Calculating Morphed Image')
+        self.progress.set_text('Calculating morphed Image')
         m = Numeric.zeros((self.height,self.width,3),'b')
         o = self.pixbuf.get_pixels_array()
 
