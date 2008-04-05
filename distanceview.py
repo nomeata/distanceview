@@ -137,7 +137,10 @@ class Graph(object):
 
     def on_face(self,p):
         if not self.in_bbox(p, self.max_bounds):
-            return self.faces[self.outer_face]
+            if not self.outer_face:
+                return self.vertices
+            else:
+                return self.faces[self.outer_face]
         
         (x,y) = p
         (bx,_,by,_) = self.max_bounds
