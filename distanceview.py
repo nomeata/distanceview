@@ -457,9 +457,13 @@ class DistanceView:
         self.show_triangulation = gtk.CheckButton('Show Triangulation')
         self.show_triangulation.props.active = False
         self.show_triangulation.connect('toggled', self.queue_draw)
+        self.show_int_path = gtk.CheckButton('Show Integration path')
+        self.show_int_path.props.active = False
+        self.show_int_path.connect('toggled', self.queue_draw)
         vbox_heightmap = gtk.VBox()
         vbox_heightmap.add(self.show_heightmap)
         vbox_heightmap.add(self.show_triangulation)
+        vbox_heightmap.add(self.show_int_path)
 
         hbox2 = gtk.HBox()
         hbox2.pack_start(do_open, expand=False)
@@ -579,11 +583,8 @@ class DistanceView:
                 cr.line_to(*self.hover_point)
                 cr.stroke()
         
-        if self.d and self.last_mouse_pos:
-            cr.set_source_rgba(0,0,0,1)
-            cr.move_to(*self.last_mouse_pos)
-            cr.rel_line_to(*self.gradient(self.last_mouse_pos))
-            cr.stroke()
+        if self.d and self.last_mouse_pos and self.show_int_path.props.active:
+            self.draw_integration_path(cr, self.last_mouse_pos)
 
     def do_expose_event_moved(self, widget, event):
         gc = widget.window.new_gc()
@@ -843,6 +844,45 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         self.pixbuf_moved = gtk.gdk.pixbuf_new_from_array(m, gtk.gdk.COLORSPACE_RGB, 8)
         self.reset_progress()
         
+    def path_integrate(self, p, callback=lambda x,y: None):
+        d = self.d
+        z = self.zoom.get_value()
+        step = 20
+        (cx,cy) = (self.width/2, self.height/2)
+        (sx,sy) = self.graph.start
+        
+        (x,y) = p
+        size = dist(p,(cx,cy)) / z
+        if size > step:
+            tx = sx + (float(x-cx) / size * step)
+            ty = sy + (float(y-cy) / size * step)
+            i = 0
+            l = 1000
+            while size > step and i < 50 and l>step/20:
+                callback(tx,ty)
+                (dx,dy) = self.gradient((int(tx),int(ty)))
+                l = length((dx,dy))
+                if l > step/20:
+                    size -= l
+                    tx += dx
+                    ty += dy
+                else:
+                    size = 0
+                i += 1
+            return (tx,ty)
+        else:
+            tx = sx +x -cx
+            ty = sy +y -cy
+            return (tx,ty)
+
+    def draw_integration_path(self, cr, p):
+        (sx,sy) = self.graph.start
+        cr.set_source_rgba(0,0,0,1)
+        cr.move_to(sx,sy)
+        tx,ty = self.path_integrate(p, callback = cr.line_to)
+        cr.line_to(tx,ty)
+        cr.stroke()
+
     def morpher_radial(self, f):
         d = self.d
         z = self.zoom.get_value()
@@ -923,7 +963,7 @@ Right click anywhere ot adda vertex and an edge in one go.'''
     def gradient(self,(x,y)):
         # Sobel filter:
         d = self.d
-        factor = -16
+        factor = 1
         return( factor * float(   (d[x+1,y-1] + 2*d[x+1,y] + d[x+1,y+1])
                                  -(d[x-1,y-1] + 2*d[x-1,y] + d[x-1,y+1]) )/8,
                 factor *      (   (d[x-1,y+1] + 2*d[x,y+1] + d[x+1,y+1])
