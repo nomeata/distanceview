@@ -419,7 +419,8 @@ class DistanceView:
 
         self.morpher = gtk.combo_box_new_text()
         self.morphers = {
-                'Radial': self.morpher_radial
+                'Radial': self.morpher_radial,
+                'Path int. (backwards)': self.morpher_int_back,
             }
         keys = self.morphers.keys()
         keys.sort()
@@ -882,6 +883,21 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         tx,ty = self.path_integrate(p, callback = cr.line_to)
         cr.line_to(tx,ty)
         cr.stroke()
+
+    def morpher_int_back(self, f):
+        d = self.d
+        z = self.zoom.get_value()
+        step = 20
+        (cx,cy) = (self.width/2, self.height/2)
+        (sx,sy) = self.graph.start
+        for x in range(self.width):
+            self.progress.set_fraction(float(x)/float(self.width))
+            self.update_gui()
+            for y in range(self.height):
+                p = (x,y)
+                (tx,ty) = self.path_integrate(p)
+                if 0<= tx < self.width and 0<= ty < self.height:
+                    f[x,y] = (ty,tx)
 
     def morpher_radial(self, f):
         d = self.d
