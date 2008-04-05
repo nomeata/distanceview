@@ -431,8 +431,13 @@ class DistanceView:
         hbox_penalty.add(gtk.Label('Offroad penalty:'))
         hbox_penalty.add(self.penalty)
 
+        self.crossroads = gtk.CheckButton('Allow Roadcrossing')
+        self.crossroads.props.visible = False
+        self.crossroads.props.active = True
+
         vbox_dist = gtk.VBox()
         vbox_dist.add(hbox_penalty)
+        vbox_dist.add(self.crossroads)
 
         self.show_heigthmap = gtk.CheckButton('Show heightmap')
         self.show_heigthmap.props.active = True
@@ -714,7 +719,8 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         self.update_gui()
 
     def recalc_distance(self):
-        far = self.penalty.get_value_as_int() * (self.width + self.height)
+        penalty = self.penalty.get_value_as_int() 
+        far = penalty * (self.width + self.height)
 
         self.prepare_progress()
         self.progress.set_text('Preparing array')
@@ -726,7 +732,7 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                 d[x,y] = far
 
         d[self.graph.start] = 0
-        todo = [self.graph.start]
+        todo = set([self.graph.start])
 
         # unoptimized djikstra
         self.progress.set_text('Djikstra')
@@ -739,10 +745,15 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                       [t for (t,s2) in self.graph.edges if s2 == s ]):
                 if d[s] + dist(s,t) < d[t]:
                     d[t] = d[s] + dist(s,t)
-                    todo.append(t)
+                    todo.add(t)
+            if self.crossroads.props.active:
+                for t in self.graph.vertices:
+                    if s != t and d[s] + penalty * dist(s,t) < d[t]:
+                        d[t] = d[s] + penalty * dist(s,t)
+                        todo.add(t)
+
             self.update_gui(True)
 
-        penalty = self.penalty.get_value_as_int() 
         self.progress.set_text('Off-Graph')
         for x in range(self.width):
             self.progress.set_fraction(float(x)/float(self.width))
