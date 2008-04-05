@@ -439,14 +439,14 @@ class DistanceView:
         vbox_dist.add(hbox_penalty)
         vbox_dist.add(self.crossroads)
 
-        self.show_heigthmap = gtk.CheckButton('Show heightmap')
-        self.show_heigthmap.props.active = True
-        self.show_heigthmap.connect('toggled', self.queue_draw)
+        self.show_heightmap = gtk.CheckButton('Show heightmap')
+        self.show_heightmap.props.active = True
+        self.show_heightmap.connect('toggled', self.queue_draw)
         self.show_triangulation = gtk.CheckButton('Show Triangulation')
         self.show_triangulation.props.active = False
         self.show_triangulation.connect('toggled', self.queue_draw)
         vbox_heightmap = gtk.VBox()
-        vbox_heightmap.add(self.show_heigthmap)
+        vbox_heightmap.add(self.show_heightmap)
         vbox_heightmap.add(self.show_triangulation)
 
         hbox2 = gtk.HBox()
@@ -503,7 +503,7 @@ class DistanceView:
 
         if self.pixbuf:
             widget.window.draw_pixbuf(gc, self.pixbuf, 0,0,0,0,-1,-1)
-        if self.pixbuf_heightmap and self.show_heigthmap.props.active:
+        if self.pixbuf_heightmap and self.show_heightmap.props.active:
             widget.window.draw_pixbuf(gc, self.pixbuf_heightmap, 0,0,0,0,-1,-1)
 
         if (self.d
