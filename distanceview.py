@@ -746,10 +746,8 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         self.progress.set_text('Preparing array')
         self.update_gui()
         d = self.d = Numeric.zeros((self.width,self.height), 'i')
-        for x in range(self.width):
-            self.update_gui(True)
-            for y in range(self.height):
-                d[x,y] = far
+        for (x,y) in self.all_points(True):
+            d[x,y] = far
 
         d[self.graph.start] = 0
         todo = set([self.graph.start])
@@ -775,29 +773,26 @@ Right click anywhere ot adda vertex and an edge in one go.'''
             self.update_gui(True)
 
         self.progress.set_text('Off-Graph')
-        for x in range(self.width):
-            self.progress.set_fraction(float(x)/float(self.width))
-            self.update_gui()
-            for y in range(self.height):
-                p = (x,y)
-                if d[p]==far:
-                    # Nearest footpoint:
-                    #(p1,p2) = min(graph, key = lambda e: dist2(find_footpoint(e,p),p))
-                    #footpoint = find_footpoint((p1,p2),p)
-                    #if d[footpoint] == far:
-                    #    d[footpoint] = min(d[p1] + dist(p1,footpoint),
-                    #                       d[p2] + dist(p2,footpoint))
-                    #d[p] = d[footpoint] + dist(p, footpoint)
+        for (x,y) in self.all_points(True):
+            p = (x,y)
+            if d[p]==far:
+                # Nearest footpoint:
+                #(p1,p2) = min(graph, key = lambda e: dist2(find_footpoint(e,p),p))
+                #footpoint = find_footpoint((p1,p2),p)
+                #if d[footpoint] == far:
+                #    d[footpoint] = min(d[p1] + dist(p1,footpoint),
+                #                       d[p2] + dist(p2,footpoint))
+                #d[p] = d[footpoint] + dist(p, footpoint)
 
-                    # Best point:
-                    #d[x,y] = min(map (lambda p1: d[p1] + 5*dist(p,p1), points))
+                # Best point:
+                #d[x,y] = min(map (lambda p1: d[p1] + 5*dist(p,p1), points))
 
-                    # Best footpoint:
-                    #for (p1,p2) in self.graph.edges:
-                    for (p1,p2) in self.graph.near_edges(p):
-                        f = find_footpoint((p1,p2),p)
-                        c = min((p1,p2), key=lambda pt: d[pt])
-                        d[p] = min(d[p], d[c] + dist(c,f) + penalty * dist(f,p))
+                # Best footpoint:
+                #for (p1,p2) in self.graph.edges:
+                for (p1,p2) in self.graph.near_edges(p):
+                    f = find_footpoint((p1,p2),p)
+                    c = min((p1,p2), key=lambda pt: d[pt])
+                    d[p] = min(d[p], d[c] + dist(c,f) + penalty * dist(f,p))
 
         self.reset_progress()
     
@@ -811,12 +806,9 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         self.pixbuf_heightmap = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, True, 8, self.width, self.height)
         i = self.pixbuf_heightmap.get_pixels_array()
         #i = Numeric.zeros((self.height,self.width,4), 'b')
-        for x in range(self.width):
-            self.progress.set_fraction(float(x)/float(self.width))
-            self.update_gui()
-            for y in range(self.height):
-                a = 255 - min(d[x,y]//3,255)
-                i[y,x,:]= (255,0,0,a)
+        for (x,y) in self.all_points(True):
+            a = 255 - min(d[x,y]//3,255)
+            i[y,x,:]= (255,0,0,a)
 
         self.reset_progress()
 
@@ -890,65 +882,55 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         step = 20
         (cx,cy) = (self.width/2, self.height/2)
         (sx,sy) = self.graph.start
-        for x in range(self.width):
-            self.progress.set_fraction(float(x)/float(self.width))
-            self.update_gui()
-            for y in range(self.height):
-                p = (x,y)
-                (tx,ty) = self.path_integrate(p)
-                if 0<= tx < self.width and 0<= ty < self.height:
-                    f[x,y] = (ty,tx)
+        for (x,y) in self.all_points(True):
+            p = (x,y)
+            (tx,ty) = self.path_integrate(p)
+            if 0<= tx < self.width and 0<= ty < self.height:
+                f[x,y] = (ty,tx)
 
     def morpher_radial(self, f):
         d = self.d
         z = self.zoom.get_value()
         (cx,cy) = (self.width/2, self.height/2)
         (sx,sy) = self.graph.start
-        for x in range(self.width):
-            self.progress.set_fraction(float(x)/float(self.width))
-            self.update_gui()
-            for y in range(self.height):
-                p = (x,y)
-                size = dist(p,self.graph.start) * z
-                if size>0.05:
-                    npx = int(round(cx + (x-sx)*d[p]/size))
-                    npy = int(round(cy + (y-sy)*d[p]/size))
-                    if 0<= npx < self.width and 0<= npy < self.height:
-                        if f[npx,npy] != (0,0):
-                            # already something there, make sure the closer one wins
-                            if dist(f[npx,npy], self.graph.start) *z > size:
-                                f[npx,npy,:] = (y,x)
-                        else:
+        for (x,y) in self.all_points(True):
+            p = (x,y)
+            size = dist(p,self.graph.start) * z
+            if size>0.05:
+                npx = int(round(cx + (x-sx)*d[p]/size))
+                npy = int(round(cy + (y-sy)*d[p]/size))
+                if 0<= npx < self.width and 0<= npy < self.height:
+                    if f[npx,npy] != (0,0):
+                        # already something there, make sure the closer one wins
+                        if dist(f[npx,npy], self.graph.start) *z > size:
                             f[npx,npy,:] = (y,x)
-                else:
-                    f[cx,cy,:] = (y,x)
+                    else:
+                        f[npx,npy,:] = (y,x)
+            else:
+                f[cx,cy,:] = (y,x)
 
     def interpolate_blocks(self, o, m, f):
-        for x in range(self.width):
-            self.progress.set_fraction(float(x)/float(self.width))
-            self.update_gui()
-
-            for y in range(self.height):
-                if f[x, y] != (0,0):
-                    m[y,x] = o[f[x,y]]
-                    #print "Pixel data found directly"
-                else:
-                    done = False
-                    for i in range(1,3):
-                        for tx in range(x-i,x+i+1):
-                            if 0 <= tx < self.width:
-                                for ty in range(y-i,y+i+1):
-                                    if 0 <= ty < self.height:
-                                        if f[tx, ty] != (0,0):
-                                            m[y,x] = o[f[tx,ty]]
-                                            done = True
-                                            #print "Neighboring pixels asked (%d)" % i
-                                            break
-                            if done: break
+        for (x,y) in self.all_points(True):
+            if f[x, y] != (0,0):
+                m[y,x] = o[f[x,y]]
+                #print "Pixel data found directly"
+            else:
+                done = False
+                for i in range(1,3):
+                    for tx in range(x-i,x+i+1):
+                        if 0 <= tx < self.width:
+                            for ty in range(y-i,y+i+1):
+                                if 0 <= ty < self.height:
+                                    if f[tx, ty] != (0,0):
+                                        m[y,x] = o[f[tx,ty]]
+                                        done = True
+                                        #print "Neighboring pixels asked (%d)" % i
+                                        break
                         if done: break
-                    #if not done:
-                    #    print "Could not find pixel to take color from."
-                    #    m[y,x] = (255,255,0)
+                    if done: break
+                #if not done:
+                #    print "Could not find pixel to take color from."
+                #    m[y,x] = (255,255,0)
 
     def interpolate_stripes(self, o, m, f):
         for x in range(self.width):
@@ -968,13 +950,9 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                     prev = y
 
     def interpolate_none(self, o, m, f):
-        for x in range(self.width):
-            self.progress.set_fraction(float(x)/float(self.width))
-            self.update_gui()
-
-            for y in range(self.height):
-                if f[x,y] != (0,0):
-                    m[y,x] = o[f[x,y]]
+        for (x,y) in self.all_points(True):
+            if f[x,y] != (0,0):
+                m[y,x] = o[f[x,y]]
 
     def gradient(self,(x,y)):
         # Sobel filter:
@@ -984,6 +962,14 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                                  -(d[x-1,y-1] + 2*d[x-1,y] + d[x-1,y+1]) )/8,
                 factor *      (   (d[x-1,y+1] + 2*d[x,y+1] + d[x+1,y+1])
                                  -(d[x-1,y-1] + 2*d[x,y-1] + d[x+1,y-1]) )/8)
+    
+    def all_points(self, progress=False):
+        for x in range(self.width):
+            if progress:
+                self.progress.set_fraction(float(x)/float(self.width))
+                self.update_gui()
+            for y in range(self.height):
+                yield (x,y)
 
     def recalc_all(self):
         self.recalc_distance()
