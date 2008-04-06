@@ -422,7 +422,8 @@ class DistanceView:
         self.morpher = gtk.combo_box_new_text()
         self.morphers = {
                 'Radial': self.morpher_radial,
-                'Path int. (backwards)': self.morpher_int_back,
+                'Radial (backw.)': self.morpher_radial_back,
+                'Path int. (backw.)': self.morpher_int_back,
             }
         keys = self.morphers.keys()
         keys.sort()
@@ -901,6 +902,56 @@ Right click anywhere ot adda vertex and an edge in one go.'''
             (tx,ty) = self.path_integrate(p)
             if 0<= tx < self.width and 0<= ty < self.height:
                 f[x,y] = (ty,tx)
+
+    def d_float(self,x,y):
+        d = self.d
+        ix = int(x)
+        iy = int(y)
+        rx = x%1
+        ry = x%1
+        return ( (1-rx) * (1-ry) * d[ix  ,iy  ] +
+                 (  rx) * (1-ry) * d[ix+1,iy  ] +
+                 (  rx) * (  ry) * d[ix+1,iy+1] +
+                 (1-rx) * (  ry) * d[ix  ,iy+1] )
+
+    def p_radial(self,dx,dy,dl,r):
+        (sx,sy) = self.graph.start
+        tx = sx + (float(dx * r) / dl)
+        ty = sy + (float(dy * r) / dl)
+        return (tx,ty)
+
+    def d_radial(self,dx,dy,dl,r):
+        (tx,ty) = self.p_radial(dx,dy,dl,r)
+        
+        if 0<= tx < self.width-1 and 0<= ty < self.height-1:
+            return self.d_float(tx,ty)
+        else:
+            return 10000
+
+    def morpher_radial_back(self, f):
+        z = self.zoom.get_value()
+        (cx,cy) = (self.width/2, self.height/2)
+        for (x,y) in self.all_points(True):
+            (dx, dy) = (x - cx,y - cy)
+            dlen = length((dx,dy))
+            size = dlen * z
+            if size>0.05:
+                search_min = 0
+                search_max = 1000
+
+                while search_max - search_min > 1:
+                    search_half = (search_max + search_min)/2
+                    if self.d_radial(dx, dy, dlen, search_half) < size:
+                        search_min = search_half
+                    else:
+                        search_max = search_half
+
+                (ox,oy) = self.p_radial(dx,dy,dlen,search_max)
+
+                if 0<= ox < self.width and 0<= oy < self.height:
+                    f[x,y] = (int(oy), int(ox))
+            else:
+                f[x,y] = self.graph.start
 
     def morpher_radial(self, f):
         d = self.d
