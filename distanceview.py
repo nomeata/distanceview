@@ -889,7 +889,8 @@ Right click anywhere ot adda vertex and an edge in one go.'''
     def morpher_int_back(self):
         self.prepare_progress()
         self.progress.set_text('Calculating transformation')
-        f = Numeric.zeros((self.width,self.height,2),'i')
+        m = Numeric.zeros((self.height,self.width,3),'b')
+        o = self.pixbuf.get_pixels_array()
 
         d = self.d
         z = self.zoom.get_value()
@@ -900,11 +901,11 @@ Right click anywhere ot adda vertex and an edge in one go.'''
             p = (x,y)
             (tx,ty) = self.path_integrate(p)
             if 0<= tx < self.width and 0<= ty < self.height:
-                f[x,y] = (ty,tx)
+                m[y,x] = (ty,tx)
 
+        self.m = m
+        self.pixbuf_moved = gtk.gdk.pixbuf_new_from_array(m, gtk.gdk.COLORSPACE_RGB, 8)
         self.reset_progress()
-
-        self.interpolate(f)
 
     def d_float(self,x,y):
         d = self.d
@@ -934,7 +935,8 @@ Right click anywhere ot adda vertex and an edge in one go.'''
     def morpher_radial_back(self):
         self.prepare_progress()
         self.progress.set_text('Calculating transformation')
-        f = Numeric.zeros((self.width,self.height,2),'i')
+        m = Numeric.zeros((self.height,self.width,3),'b')
+        o = self.pixbuf.get_pixels_array()
 
         z = self.zoom.get_value()
         (cx,cy) = (self.width/2, self.height/2)
@@ -956,13 +958,13 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                 (ox,oy) = self.p_radial(dx,dy,dlen,search_max)
 
                 if 0<= ox < self.width and 0<= oy < self.height:
-                    f[x,y] = (int(oy), int(ox))
+                    m[y,x] = o[int(oy), int(ox)]
             else:
-                f[x,y] = self.graph.start
+                m[y,x] = o[self.graph.start]
         
+        self.m = m
+        self.pixbuf_moved = gtk.gdk.pixbuf_new_from_array(m, gtk.gdk.COLORSPACE_RGB, 8)
         self.reset_progress()
-
-        self.interpolate(f)
 
 
     def morpher_radial(self):
