@@ -832,14 +832,10 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         if self.d is None:
             self.recalc_distance()
 
-        self.prepare_progress()
-        self.progress.set_text('Calculating transformation')
-        f = Numeric.zeros((self.width,self.height,2),'i')
-
         choice = self.morpher.get_active_text()
-        self.morphers[choice](f)
-        self.reset_progress()
+        self.morphers[choice]()
 
+    def interpolate(self, f):
         self.prepare_progress()
         self.progress.set_text('Calculating morphed Image')
         m = Numeric.zeros((self.height,self.width,3),'b')
@@ -848,11 +844,10 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         choice = self.interpolator.get_active_text()
         self.interpolators[choice](o, m, f)
 
-        self.moved_zoom = self.zoom.get_value()
         self.m = m
         self.pixbuf_moved = gtk.gdk.pixbuf_new_from_array(m, gtk.gdk.COLORSPACE_RGB, 8)
         self.reset_progress()
-        
+
     def path_integrate(self, p, callback=lambda x,y: None):
         d = self.d
         z = self.zoom.get_value()
@@ -891,7 +886,11 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         cr.line_to(tx,ty)
         cr.stroke()
 
-    def morpher_int_back(self, f):
+    def morpher_int_back(self):
+        self.prepare_progress()
+        self.progress.set_text('Calculating transformation')
+        f = Numeric.zeros((self.width,self.height,2),'i')
+
         d = self.d
         z = self.zoom.get_value()
         step = 20
@@ -902,6 +901,10 @@ Right click anywhere ot adda vertex and an edge in one go.'''
             (tx,ty) = self.path_integrate(p)
             if 0<= tx < self.width and 0<= ty < self.height:
                 f[x,y] = (ty,tx)
+
+        self.reset_progress()
+
+        self.interpolate(f)
 
     def d_float(self,x,y):
         d = self.d
@@ -928,7 +931,11 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         else:
             return 10000
 
-    def morpher_radial_back(self, f):
+    def morpher_radial_back(self):
+        self.prepare_progress()
+        self.progress.set_text('Calculating transformation')
+        f = Numeric.zeros((self.width,self.height,2),'i')
+
         z = self.zoom.get_value()
         (cx,cy) = (self.width/2, self.height/2)
         for (x,y) in self.all_points(True):
@@ -952,8 +959,16 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                     f[x,y] = (int(oy), int(ox))
             else:
                 f[x,y] = self.graph.start
+        
+        self.reset_progress()
 
-    def morpher_radial(self, f):
+        self.interpolate(f)
+
+
+    def morpher_radial(self):
+        self.prepare_progress()
+        self.progress.set_text('Calculating transformation')
+        f = Numeric.zeros((self.width,self.height,2),'i')
         d = self.d
         z = self.zoom.get_value()
         (cx,cy) = (self.width/2, self.height/2)
@@ -973,6 +988,9 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                         f[npx,npy,:] = (y,x)
             else:
                 f[cx,cy,:] = (y,x)
+        self.reset_progress()
+
+        self.interpolate(f)
 
     def interpolate_blocks(self, o, m, f):
         for (x,y) in self.all_points(True):
