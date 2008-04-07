@@ -429,7 +429,7 @@ class DistanceView:
         keys.sort()
         for k in keys:
             self.morpher.append_text(k)
-        self.morpher.set_active(keys.index('Radial'))
+        self.morpher.set_active(keys.index('Radial (backw.)'))
         hbox_morpher = gtk.HBox()
         hbox_morpher.add(gtk.Label('Morpher:'))
         hbox_morpher.add(self.morpher)
