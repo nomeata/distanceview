@@ -720,7 +720,7 @@ Left click any where else to add a new vertex.
 Middle click to select center vertex.
 Right click on the selected vertex to delete it, if it has no edges anymore.
 Right click on another vertex to add or remove the edge.
-Right click anywhere ot adda vertex and an edge in one go.'''
+Right click anywhere to add a vertex and an edge in one go.'''
         help.run()
         help.destroy()
 
