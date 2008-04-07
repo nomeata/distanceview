@@ -912,11 +912,28 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         ix = int(x)
         iy = int(y)
         rx = x%1
-        ry = x%1
+        ry = y%1
         return ( (1-rx) * (1-ry) * d[ix  ,iy  ] +
                  (  rx) * (1-ry) * d[ix+1,iy  ] +
                  (  rx) * (  ry) * d[ix+1,iy+1] +
                  (1-rx) * (  ry) * d[ix  ,iy+1] )
+    def o_float(self,o,x,y):
+        ix = int(x)
+        iy = int(y)
+        rx = x%1
+        ry = y%1
+        return ( (1-rx) * (1-ry) * o[ix  ,iy  ][0] +
+                 (  rx) * (1-ry) * o[ix+1,iy  ][0] +
+                 (  rx) * (  ry) * o[ix+1,iy+1][0] +
+                 (1-rx) * (  ry) * o[ix  ,iy+1][0],
+                 (1-rx) * (1-ry) * o[ix  ,iy  ][1] +
+                 (  rx) * (1-ry) * o[ix+1,iy  ][1] +
+                 (  rx) * (  ry) * o[ix+1,iy+1][1] +
+                 (1-rx) * (  ry) * o[ix  ,iy+1][1],
+                 (1-rx) * (1-ry) * o[ix  ,iy  ][2] +
+                 (  rx) * (1-ry) * o[ix+1,iy  ][2] +
+                 (  rx) * (  ry) * o[ix+1,iy+1][2] +
+                 (1-rx) * (  ry) * o[ix  ,iy+1][2]   )
 
     def p_radial(self,dx,dy,dl,r):
         (sx,sy) = self.graph.start
@@ -945,10 +962,10 @@ Right click anywhere ot adda vertex and an edge in one go.'''
             dlen = length((dx,dy))
             size = dlen * z
             if size>0.05:
-                search_min = 0
-                search_max = 1000
+                search_min = 0.0
+                search_max = 1000.0
 
-                while search_max - search_min > 1:
+                while search_max - search_min > 0.1:
                     search_half = (search_max + search_min)/2
                     if self.d_radial(dx, dy, dlen, search_half) < size:
                         search_min = search_half
@@ -957,8 +974,8 @@ Right click anywhere ot adda vertex and an edge in one go.'''
 
                 (ox,oy) = self.p_radial(dx,dy,dlen,search_max)
 
-                if 0<= ox < self.width and 0<= oy < self.height:
-                    m[y,x] = o[int(oy), int(ox)]
+                if 0<= ox < self.width - 1 and 0<= oy < self.height - 1:
+                    m[y,x] = self.o_float(o, oy,ox)
             else:
                 m[y,x] = o[self.graph.start]
         
