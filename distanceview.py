@@ -917,6 +917,7 @@ Right click anywhere ot adda vertex and an edge in one go.'''
                  (  rx) * (1-ry) * d[ix+1,iy  ] +
                  (  rx) * (  ry) * d[ix+1,iy+1] +
                  (1-rx) * (  ry) * d[ix  ,iy+1] )
+
     def o_float(self,o,x,y):
         ix = int(x)
         iy = int(y)
@@ -982,7 +983,6 @@ Right click anywhere ot adda vertex and an edge in one go.'''
         self.m = m
         self.pixbuf_moved = gtk.gdk.pixbuf_new_from_array(m, gtk.gdk.COLORSPACE_RGB, 8)
         self.reset_progress()
-
 
     def morpher_radial(self):
         self.prepare_progress()
