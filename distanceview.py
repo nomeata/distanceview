@@ -1,4 +1,4 @@
-#!/usr/bin/python2.5
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 #
@@ -31,7 +31,7 @@ import gtk
 import gtk.glade
 import gobject
 
-import Numeric
+import numpy.oldnumeric
 import math
 import pickle
 import time
@@ -526,7 +526,7 @@ class DistanceView:
         if self.pixbuf_heightmap and self.show_heightmap.props.active:
             widget.window.draw_pixbuf(gc, self.pixbuf_heightmap, 0,0,0,0,-1,-1)
 
-        if (self.d
+        if (self.d is not None
                 and not self.graph_edit.props.active
                 and not self.progress.props.sensitive):
             pb = self.equilines()
@@ -587,7 +587,7 @@ class DistanceView:
                 cr.line_to(*self.hover_vertex)
                 cr.stroke()
         
-        if self.d and self.last_mouse_pos_moved and self.show_int_path.props.active:
+        if self.d is not None and self.last_mouse_pos_moved and self.show_int_path.props.active:
             self.draw_integration_path(cr, self.last_mouse_pos_moved)
 
     def do_expose_event_moved(self, widget, event):
@@ -650,7 +650,7 @@ class DistanceView:
         self.queue_draw()
 
     def equilines(self):
-        assert self.d
+        assert self.d is not None
         pb = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, True, 8, self.width, self.height)
         el = pb.get_pixels_array()
         my_d = self.selected_d
@@ -671,7 +671,7 @@ class DistanceView:
             p = (int(round(event.x)),int(round(event.y)))
 
             self.last_mouse_pos_orig = p
-            if self.d:
+            if self.d is not None:
                 self.selected_d = self.d[p]
                 self.status.set_text("(%d,%d): %d" % (event.x, event.y, self.selected_d))
                 self.slider.set_value(self.selected_d)
@@ -761,7 +761,7 @@ Right click anywhere to add a vertex and an edge in one go.'''
         self.prepare_progress()
         self.progress.set_text('Preparing array')
         self.update_gui()
-        d = self.d = Numeric.zeros((self.width,self.height), 'i')
+        d = self.d = numpy.oldnumeric.zeros((self.width,self.height), 'i')
         for (x,y) in self.all_points(True):
             d[x,y] = far
 
@@ -821,7 +821,7 @@ Right click anywhere to add a vertex and an edge in one go.'''
         self.progress.set_text('Recreating heightmap')
         self.pixbuf_heightmap = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, True, 8, self.width, self.height)
         i = self.pixbuf_heightmap.get_pixels_array()
-        #i = Numeric.zeros((self.height,self.width,4), 'b')
+        #i = numpy.oldnumeric.zeros((self.height,self.width,4), 'B')
         for (x,y) in self.all_points(True):
             a = 255 - min(d[x,y]//3,255)
             i[y,x,:]= (255,0,0,a)
@@ -838,7 +838,7 @@ Right click anywhere to add a vertex and an edge in one go.'''
     def interpolate(self, f):
         self.prepare_progress()
         self.progress.set_text('Calculating morphed Image')
-        m = Numeric.zeros((self.height,self.width,3),'b')
+        m = numpy.oldnumeric.zeros((self.height,self.width,3),'B')
         o = self.pixbuf.get_pixels_array()
 
         choice = self.interpolator.get_active_text()
@@ -889,7 +889,7 @@ Right click anywhere to add a vertex and an edge in one go.'''
     def morpher_int_back(self):
         self.prepare_progress()
         self.progress.set_text('Calculating transformation')
-        m = Numeric.zeros((self.height,self.width,3),'b')
+        m = numpy.oldnumeric.zeros((self.height,self.width,3),'B')
         o = self.pixbuf.get_pixels_array()
 
         d = self.d
@@ -953,7 +953,7 @@ Right click anywhere to add a vertex and an edge in one go.'''
     def morpher_radial_back(self):
         self.prepare_progress()
         self.progress.set_text('Calculating transformation')
-        m = Numeric.zeros((self.height,self.width,3),'b')
+        m = numpy.oldnumeric.zeros((self.height,self.width,3),'B')
         o = self.pixbuf.get_pixels_array()
 
         z = self.zoom.get_value()
@@ -987,7 +987,7 @@ Right click anywhere to add a vertex and an edge in one go.'''
     def morpher_radial(self):
         self.prepare_progress()
         self.progress.set_text('Calculating transformation')
-        f = Numeric.zeros((self.width,self.height,2),'i')
+        f = numpy.oldnumeric.zeros((self.width,self.height,2),'i')
         d = self.d
         z = self.zoom.get_value()
         (cx,cy) = (self.width/2, self.height/2)
